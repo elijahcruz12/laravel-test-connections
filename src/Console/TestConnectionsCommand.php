@@ -3,18 +3,26 @@
 namespace Elijahcruz\LaravelTestConnections\Console;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 
 class TestConnectionsCommand extends Command
 {
     protected $signature = 'test:connections
         {--group= : The group of connections to test}
-        {--log : Log to your logs if any connection fails}';
+        {--log : Log to your logs if any connection fails}
+        {--fail-fast : Stop testing connections after the first failure}';
 
     protected $description = 'Test your database, redis, and cache connections';
 
-    public function handle()
+    /**
+     * Tests the connections
+     *
+     * @return int
+     */
+    public function handle(): int
     {
         $groupName = $this->option('group') ?? config('test-connections.default');
 
@@ -44,11 +52,58 @@ class TestConnectionsCommand extends Command
 
         if(array_key_exists('database', $group)){
             $dbTest = $this->testDatabaseConnection();
+
+            if($dbTest){
+                $this->info('Database connection successful');
+            }
+            else{
+                if($this->option('log') ?? config('test-connections.log', false)){
+                    Log::error('Database connection failed');
+                }
+                $this->error('Database connection failed');
+                if($this->option('fail-fast')){
+                    return Command::FAILURE;
+                }
+            }
         }
 
         if(array_key_exists('redis', $group)){
             $redisTest = $this->testRedisConnection();
+
+            if($redisTest){
+                $this->info('Redis connection successful');
+            }
+            else{
+                if($this->option('log') ?? config('test-connections.log', false)){
+                    Log::error('Redis connection failed');
+                }
+                $this->error('Redis connection failed');
+                if($this->option('fail-fast')){
+                    return Command::FAILURE;
+                }
+            }
         }
+
+        if(array_key_exists('cache', $group)){
+            $cacheTest = $this->testCacheConnection();
+
+            if($cacheTest){
+                $this->info('Cache connection successful');
+            }
+            else{
+                if($this->option('log') ?? config('test-connections.log', false)){
+                    Log::error('Cache connection failed');
+                }
+                $this->error('Cache connection failed');
+                if($this->option('fail-fast')){
+                    return Command::FAILURE;
+                }
+            }
+        }
+
+        $this->info('All connections tested.');
+
+        return Command::SUCCESS;
     }
 
     /**
@@ -61,10 +116,25 @@ class TestConnectionsCommand extends Command
         return DB::connection()->getDatabaseName() ? true : false;
     }
 
-    private function testRedisConnection()
+    /**
+     * Checks the Redis connection
+     *
+     * @return bool
+     */
+    private function testRedisConnection(): bool
     {
-        if(Redis::command('ping')){
-            return true;
-        }
+        return Redis::command('PING') ? true : false;
+    }
+
+    /**
+     * Tests the Cache connection
+     *
+     * @return bool
+     */
+    private function testCacheConnection(): bool
+    {
+        Cache::put('test-connections', true, 60);
+
+        return (bool)Cache::get('test-connections', false);
     }
 }
