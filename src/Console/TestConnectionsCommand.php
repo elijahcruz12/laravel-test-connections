@@ -16,7 +16,14 @@ class TestConnectionsCommand extends Command
 
     public function handle()
     {
-        $group = $this->option('group') ?? config('test-connections.default');
+        $groupName = $this->option('group') ?? config('test-connections.default');
+
+        if(!config('test-connections.connections.'.$groupName)){
+            $this->error('The group '.$groupName.' does not exist');
+            return Command::FAILURE;
+        }
+
+        $group = config('test-connections.connections.'.$groupName);
 
         if(!is_array($group)){
             $this->error('The group must be an array');
