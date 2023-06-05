@@ -2,7 +2,7 @@
 
 namespace Elijahcruz\LaravelTestConnections;
 
-use App\Console\Commands\TestConnectionsCommand;
+use Elijahcruz\LaravelTestConnections\Console\TestConnectionsCommand;
 use Illuminate\Support\ServiceProvider;
 
 class LaravelTestConnectionsServiceProvider extends ServiceProvider
@@ -41,9 +41,11 @@ class LaravelTestConnectionsServiceProvider extends ServiceProvider
             ], 'lang');*/
 
             // Registering package commands.
-             $this->commands([
-                 TestConnectionsCommand::class
-             ]);
+            if ($this->app->runningInConsole()) {
+                $this->commands([
+                    TestConnectionsCommand::class,
+                ]);
+            }
         }
     }
 
