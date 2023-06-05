@@ -50,11 +50,7 @@ class TestConnectionsCommand extends Command
 
         $this->info('Testing connections...');
 
-        foreach ($group as $item){
-            $this->info('Prepping '.$item.' connection...');
-        }
-
-        if(array_key_exists('database', $group)){
+        if(in_array('database', $group)){
             $dbTest = $this->testDatabaseConnection();
 
             if($dbTest){
@@ -71,7 +67,7 @@ class TestConnectionsCommand extends Command
             }
         }
 
-        if(array_key_exists('redis', $group)){
+        if(in_array('redis', $group)){
             $redisTest = $this->testRedisConnection();
 
             if($redisTest){
@@ -88,7 +84,7 @@ class TestConnectionsCommand extends Command
             }
         }
 
-        if(array_key_exists('cache', $group)){
+        if(in_array('cache', $group)){
             $cacheTest = $this->testCacheConnection();
 
             if($cacheTest){
