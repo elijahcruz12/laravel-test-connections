@@ -50,6 +50,10 @@ class TestConnectionsCommand extends Command
 
         $this->info('Testing connections...');
 
+        foreach ($group as $item){
+            $this->info('Prepping '.$item.' connection...');
+        }
+
         if(array_key_exists('database', $group)){
             $dbTest = $this->testDatabaseConnection();
 
